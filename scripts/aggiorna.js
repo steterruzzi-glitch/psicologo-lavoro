@@ -66,7 +66,7 @@ async function main() {
         item.descrizione
       ].join(" "));
 
-      return /\bpsicolog[oaie]*\b/i.test(text);
+      return /psicolog\w*/i.test(text);
     })
     .filter(item => {
       if (!item.id || seen.has(String(item.id))) return false;
