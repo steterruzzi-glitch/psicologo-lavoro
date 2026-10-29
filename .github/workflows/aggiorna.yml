@@ -1,0 +1,32 @@
+name: Aggiornamento PsicologoLavoro
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scarica il repository
+        uses: actions/checkout@v4
+
+      - name: Configura Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Aggiorna gli annunci
+        run: node scripts/aggiorna.js
+
+      - name: Salva gli aggiornamenti
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add jobs.json
+          git diff --cached --quiet || git commit -m "Aggiornamento annunci"
+          git push
