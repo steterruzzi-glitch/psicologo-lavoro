@@ -23,10 +23,26 @@ const demoJobs=[
 {id:5,title:'Neuropsicologo/a — valutazione e riabilitazione',org:'Centro riabilitativo (esempio)',region:'Toscana',city:'Firenze',sector:'Privato e cliniche',contract:'Collaborazione',date:'2026-10-24',initials:'CR',summary:'Esempio di attività di valutazione neuropsicologica e progettazione di interventi riabilitativi.',source:'https://www.lavoro.gov.it/'},
 {id:6,title:'Psicologo/a — collaborazione professionale',org:'Studio associato (esempio)',region:'Piemonte',city:'Torino',sector:'Libera professione e collaborazioni',contract:'Collaborazione',date:'2026-10-22',initials:'SA',summary:'Esempio di collaborazione professionale con possibilità di condividere spazi e invii.',source:'https://www.lavoro.gov.it/'}
 ];
+  let jobs = [];
 const $=s=>document.querySelector(s);const $$=s=>[...document.querySelectorAll(s)];let saved=new Set(JSON.parse(localStorage.getItem('pl-saved')||'[]'));
 function fmt(d){return new Intl.DateTimeFormat('it-IT',{day:'numeric',month:'short',year:'numeric'}).format(new Date(d+'T12:00:00'))}
-function filtered(){let q=$('#q').value.trim().toLowerCase(),r=$('#region').value,s=$('#sector').value,k=$$('.kind:checked').map(x=>x.value),c=$$('.contract:checked').map(x=>x.value);let a=demoJobs.filter(j=>(!q||(j.title+' '+j.org+' '+j.city+' '+j.region+' '+j.summary).toLowerCase().includes(q))&&(!r||j.region===r)&&(!s||j.sector===s)&&(!k.length||k.includes(j.sector))&&(!c.length||c.includes(j.contract)));if($('#sort').value==='title')a.sort((x,y)=>x.title.localeCompare(y.title,'it'));else a.sort((x,y)=>y.date.localeCompare(x.date));return a}
-function render(){let a=filtered();$('#count').textContent=a.length;$('#resulttext').textContent=`${a.length} risultati dimostrativi · dati non verificati`;$('#jobs').innerHTML=a.length?a.map(j=>`<article class="job"><div class="jobtop"><div class="orglogo">${j.initials}</div><div class="jobmain"><h3 class="jobtitle">${j.title}</h3><div class="company">${j.org} · ${j.city} (${j.region})</div><div class="meta"><span class="tag">${j.sector}</span><span class="tag">${j.contract}</span><span class="tag demo">Esempio demo</span></div><div style="font-size:13px;color:#536875">${j.summary}</div></div></div><div class="jobfoot"><span class="posted">Data fittizia: ${fmt(j.date)}</span><div class="actions"><button class="save ${saved.has(j.id)?'saved':''}" data-save="${j.id}">${saved.has(j.id)?'♥ Salvato':'♡ Salva'}</button><a class="apply" href="${j.source}" target="_blank" rel="noopener">Apri fonte di riferimento ↗</a></div></div></article>`).join(''):'<div class="empty"><div style="font-size:28px;margin-bottom:8px">⌕</div><strong>Nessun risultato</strong><p>Prova a cambiare parola chiave o filtri.</p></div>';$$('[data-save]').forEach(b=>b.addEventListener('click',()=>{let id=Number(b.dataset.save);saved.has(id)?saved.delete(id):saved.add(id);localStorage.setItem('pl-saved',JSON.stringify([...saved]));render();toast(saved.has(id)?'Annuncio salvato in questo browser':'Annuncio rimosso dai salvati')}))}
+function filtered(){let q=$('#q').value.trim().toLowerCase(),r=$('#region').value,s=$('#sector').value,k=$$('.kind:checked').map(x=>x.value),c=$$('.contract:checked').map(x=>x.value);let a=jobs.filter(j=>(!q||(j.title+' '+j.org+' '+j.city+' '+j.region+' '+j.summary).toLowerCase().includes(q))&&(!r||j.region===r)&&(!s||j.sector===s)&&(!k.length||k.includes(j.sector))&&(!c.length||c.includes(j.contract)));if($('#sort').value==='title')a.sort((x,y)=>x.title.localeCompare(y.title,'it'));else a.sort((x,y)=>y.date.localeCompare(x.date));return a}
+
+fetch('./jobs.json')
+  .then(response => {
+    if (!response.ok) throw new Error('Errore nel caricamento degli annunci');
+    return response.json();
+  })
+  .then(data => {
+    jobs = data;
+    render();
+  })
+  .catch(error => {
+    console.error(error);
+    render();
+    $('#resulttext').textContent = 'Impossibile caricare gli annunci. Riprova più tardi.';
+  });
+
 function toast(s){$('#toast').textContent=s;$('#toast').classList.add('show');setTimeout(()=>$('#toast').classList.remove('show'),2100)}
 $('#search').addEventListener('click',render);$('#q').addEventListener('keydown',e=>{if(e.key==='Enter')render()});$('#region').addEventListener('change',render);$('#sector').addEventListener('change',()=>{let v=$('#sector').value;$$('.kind').forEach(x=>x.checked=false);if(v){let box=$$('.kind').find(x=>x.value===v);if(box)box.checked=true}render()});$$('.kind,.contract').forEach(x=>x.addEventListener('change',()=>{if(x.classList.contains('kind')&&x.checked)$('#sector').value='';render()}));$('#sort').addEventListener('change',render);$('#reset').addEventListener('click',()=>{$('#q').value='';$('#region').value='';$('#sector').value='';$$('.kind,.contract').forEach(x=>x.checked=false);render()});$('#mobilefilter').addEventListener('click',()=>$('#filters').classList.toggle('open'));render();
 </script></body></html>
